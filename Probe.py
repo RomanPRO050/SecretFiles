@@ -1,70 +1,93 @@
 import zipfile
 from pprint import pprint
 
-
-
-# zip_file_name = 'voyna-i-mir.txt.zip'
-#
-# zfile = zipfile.ZipFile(zip_file_name, 'r')
-# for filename in zfile.namelist():
-#     zfile.extract(filename)
 from random import randint
 
-file_name = 'voyna-i-mir.txt'
 
-stat = {}
+class Chatterer:
+    analize_count = 4
 
-# stat = {'а': {'т': 500, 'х': 5, }, 'т': {'о': 100, 'у': 50, },}
+    def __init__(self, file_name):
+        self.file_name = file_name
+        self.stat = {}
 
-analize_count = 4
-sequence = ' ' * analize_count
+    def unzip(self):
+        zfile = zipfile.ZipFile(self.file_name, 'r')
+        for filename in zfile.namelist():
+            zfile.extract(filename)
+        self.file_name = filename
 
-with open(file_name, 'r', encoding='cp1251') as file:
-    for line in file:
-        line = line[:-1]
-        #print(line)
+    def collect(self):
+        if self.file_name.endswith('.zip'):
+            self.unzip()
+        self.sequence = ' ' * self.analize_count
+        with open(self.file_name, 'r', encoding='cp1251') as file:
+            for line in file:
+                # print(line)
+                self._collect_for_line(line=line[:-1])
+
+    def _collect_for_line(self, line):
         for char in line:
-            if sequence in stat:
-                if char in stat[sequence]:
-                    stat[sequence][char] += 1
+            if self.sequence in self.stat:
+                if char in self.stat[self.sequence]:
+                    self.stat[self.sequence][char] += 1
                 else:
-                    stat[sequence][char] = 1
+                    self.stat[self.sequence][char] = 1
             else:
-                stat[sequence] = {char: 1}
+                self.stat[self.sequence] = {char: 1}
+            self.sequence = self.sequence[1:] + char
+
+    def prepare(self):
+        self.totals = {}
+        self.stat_for_generate = {}
+        for sequence, char_stat in self.stat.items():
+            self.totals[sequence] = 0
+            self.stat_for_generate[sequence] = []
+            for char, count in char_stat.items():
+                self.totals[sequence] += count
+                self.stat_for_generate[sequence].append([count, char])
+                self.stat_for_generate[sequence].sort(reverse=True)
+
+    def chat(self, N, out_file_name=None):
+
+        printed = 0
+        if out_file_name is not None:
+            file = open(out_file_name, 'w', encoding='utf8')
+        else:
+            file = None
+
+        sequence = ' ' * self.analize_count
+        spaces_printed = 0
+        while printed < N:
+            char = self._get_char(char_stat=self.stat_for_generate[sequence], total=self.totals[sequence])
+            if file:
+                file.write(char)
+            else:
+                print(char, end='')
+            if char == ' ':
+                spaces_printed += 1
+                if spaces_printed >= 10:
+                    if file:
+                        file.write('\n')
+                    else:
+                        print()
+                    spaces_printed = 0
+            printed += 1
             sequence = sequence[1:] + char
+        if file:
+            file.close()
 
-# pprint(stat)
-pprint(len(stat))
+    def _get_char(self, char_stat, total):
+        dice = randint(1, total)
+        pos = 0
+        for count, char in char_stat:
+            pos += count
+            if dice <= pos:
+                break
+        return char
 
-totals = {}
-stat_for_generate = {}
-for sequence, char_stat in stat.items():
-    totals[sequence] = 0
-    stat_for_generate[sequence] = []
-    for char, count in char_stat.items():
-        totals[sequence] += count
-        stat_for_generate[sequence].append([count, char])
-    stat_for_generate[sequence].sort(reverse=True)
 
-N = 1000
-
-printed = 0
-sequence = ' ' * analize_count
-spaces_printed = 0
-while printed < N:
-    char_stat = stat_for_generate[sequence]
-    total = totals[sequence]
-    dice = randint(1, total)
-    pos = 0
-    for count, char in char_stat:
-        pos += count
-        if dice <= pos:
-            break
-    print(char, end='')
-    if char == ' ':
-        spaces_printed += 1
-        if spaces_printed >= 10:
-            print()
-            spaces_printed = 0
-    printed += 1
-    sequence = sequence[1:] + char
+chatter = Chatterer(file_name='voyna-i-mir.txt')
+chatter.collect()
+chatter.prepare()
+chatter.chat(N=10000, out_file_name='out.txt')
