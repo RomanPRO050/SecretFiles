@@ -92,10 +92,57 @@
 # chatter.prepare()
 # chatter.chat(N=10000, out_file_name='out.txt')
 
-chars = "abcdefghijklmnopqrstuvwxyz"
-check_string = "i am checking this string to see how many times each character appears"
+import zipfile
+from operator import itemgetter
+from pprint import pprint
 
-for char in chars:
-    count = check_string.count(char)
-    if count > 1:
-        print(char, count)
+
+class CharMeter:
+
+    def __init__(self, file_name):
+        self.file_name = file_name
+        self.count = {}
+
+    def unzip(self):
+        zfile = zipfile.ZipFile(self.file_name, 'r')
+        for filename in zfile.namelist():
+            zfile.extract(filename)
+        self.file_name = filename
+
+    def collect(self):
+        if self.file_name.endswith('.zip'):
+            self.unzip()
+        with open(self.file_name, 'r', encoding='cp1251') as file:
+            for line in file:
+                for char in line:
+                    if char.isalpha() is True:
+                        if char in self.count:
+                            self.count[char] += 1
+                        else:
+                            self.count[char] = 1
+
+    def dict_to_tuple(self):
+        self.list_count = list(self.count.items())
+
+    def sort_by_values_low_to_high(self):
+        self.list_count.sort(key=lambda char: char[1])
+
+    def sort_by_values_high_to_low(self):
+        self.list_count.sort(key=lambda char: char[1], reverse=True)
+
+    def sort_by_alphabet_high_to_low(self):
+        self.list_count = sorted(self.list_count, key=itemgetter(0))
+
+    def sort_by_alphabet_low_to_high(self):
+        self.list_count = sorted(self.list_count, key=itemgetter(0), reverse=True)
+
+    def print_result(self):
+        for char in self.list_count:
+            print(char[0], ':', char[1])
+
+
+program = CharMeter(file_name='voyna-i-mir.txt')
+program.collect()
+program.dict_to_tuple()
+program.sort_by_alphabet_high_to_low()
+program.print_result()
