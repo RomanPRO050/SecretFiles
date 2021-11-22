@@ -49,6 +49,7 @@ class CharMeter:
     def __init__(self, file_name):
         self.file_name = file_name
         self.count = {}
+        self.overall = 0
 
     def unzip(self):
         zfile = zipfile.ZipFile(self.file_name, 'r')
@@ -63,6 +64,7 @@ class CharMeter:
             for line in file:
                 for char in line:
                     if char.isalpha() is True:
+                        self.overall += 1
                         if char in self.count:
                             self.count[char] += 1
                         else:
@@ -84,8 +86,17 @@ class CharMeter:
         self.list_count = sorted(self.list_count, key=itemgetter(0), reverse=True)
 
     def print_result(self):
+        print('+{txt:^10}'.format(txt='-----------'), '{txt:^1}'.format(txt='+'), '{txt:^10}+'.format(txt='-----------'))
+        print('|{txt:^11}'.format(txt='Буква'), '{txt:^1}'.format(txt='|'), '{txt:^11}|'.format(txt='частота'))
+        print('+{txt:^10}'.format(txt='-----------'), '{txt:^1}'.format(txt='+'),
+              '{txt:^10}+'.format(txt='-----------'))
         for char in self.list_count:
-            print(char[0], ':', char[1])
+            print('|{txt:^12}|'.format(txt=char[0]), '{txt:^11}|'.format(txt=char[1]))
+        print('+{txt:^10}'.format(txt='-----------'), '{txt:^1}'.format(txt='+'),
+              '{txt:^10}+'.format(txt='-----------'))
+        print('|{txt:^11}'.format(txt='Итого'), '|{txt:^12}|'.format(txt=self.overall))
+        print('+{txt:^10}'.format(txt='-----------'), '{txt:^1}'.format(txt='+'),
+              '{txt:^10}+'.format(txt='-----------'))
 
 
 program = CharMeter(file_name='voyna-i-mir.txt')
